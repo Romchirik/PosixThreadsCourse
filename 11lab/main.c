@@ -7,7 +7,6 @@
 #define NUMBER_OF_PRINTS 10  //per each thread
 
 pthread_mutex_t mutexes[3];
-pthread_cond_t condition;
 
 //emergency shutdown
 void shutdown() {
@@ -47,8 +46,7 @@ void* parent_routine(void* data) {
 int initialize() {
     if (pthread_mutex_init(&mutexes[0], NULL) ||
         pthread_mutex_init(&mutexes[1], NULL) ||
-        pthread_mutex_init(&mutexes[2], NULL) ||
-        pthread_cond_init(&condition, NULL)) {
+        pthread_mutex_init(&mutexes[2], NULL)) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -62,11 +60,13 @@ int main(int argc, char** argv) {
     }
 
     pthread_t child_thread;
-    
+
     pthread_mutex_lock(&mutexes[1]);
     if (pthread_create(&child_thread, NULL, child_routine, NULL)) {
         perror("Unable to start child thread");
         shutdown();
+        pthread_exit(EXIT_FAILURE);
+        
     }
     usleep(100);
     parent_routine(NULL);

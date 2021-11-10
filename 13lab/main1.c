@@ -9,8 +9,8 @@
 
 pthread_mutex_t mutex;
 pthread_cond_t condition;
-volatile int turn = 1;
-//emergency shutdown
+volatile int turn = 0;
+
 void shutdown() {
     if (pthread_mutex_destroy(&mutex)) {
         perror("Unable to destroy mutex\n");
@@ -31,23 +31,55 @@ int initialize() {
     return EXIT_SUCCESS;
 }
 
-void* child_routine(void* data) {
+void* child_routine2(void* data) {
+    const int my_num = 2;
+    const int next_num = 0;
+
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < NUMBER_OF_PRINTS; i++) {
-        pthread_cond_wait(&condition, &mutex);
-        printf("Hello from child: %d\n", i);
-        pthread_cond_signal(&condition);
+        while (turn != my_num) {
+            pthread_cond_wait(&condition, &mutex);
+        }
+
+        printf("Hello from child 2: %d\n", i);
+        turn = next_num;
+        pthread_cond_broadcast(&condition);
+    }
+    pthread_mutex_unlock(&mutex);
+    return NULL;
+}
+
+void* child_routine1(void* data) {
+    const int my_num = 1;
+    const int next_num = 2;
+
+    pthread_mutex_lock(&mutex);
+    for (int i = 0; i < NUMBER_OF_PRINTS; i++) {
+        while (turn != my_num) {
+            pthread_cond_wait(&condition, &mutex);
+        }
+
+        printf("Hello from child 1: %d\n", i);
+        turn = next_num;
+        pthread_cond_broadcast(&condition);
     }
     pthread_mutex_unlock(&mutex);
     return NULL;
 }
 
 void* parent_routine(void* data) {
+    const int my_num = 0;
+    const int next_num = 1;
+
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < NUMBER_OF_PRINTS; i++) {
-        pthread_cond_signal(&condition);
+        while (turn != my_num) {
+            pthread_cond_wait(&condition, &mutex);
+        }
         printf("Hello from parent: %d\n", i);
-        pthread_cond_wait(&condition, &mutex);
+        fflush(stdout);
+        turn = next_num;
+        pthread_cond_broadcast(&condition);
     }
     pthread_mutex_unlock(&mutex);
     return NULL;
@@ -59,9 +91,15 @@ int main(int argc, char** argv) {
         shutdown();
         exit(EXIT_FAILURE);
     }
-    pthread_t child_thread;
+    pthread_t child_thread1, child_thread2;
 
-    if (pthread_create(&child_thread, NULL, child_routine, NULL)) {
+    if (pthread_create(&child_thread1, NULL, child_routine1, NULL)) {
+        perror("Unable to start child thread");
+        shutdown();
+    }
+
+    usleep(100);
+    if (pthread_create(&child_thread2, NULL, child_routine2, NULL)) {
         perror("Unable to start child thread");
         shutdown();
     }
@@ -69,7 +107,7 @@ int main(int argc, char** argv) {
     usleep(100);
     parent_routine(NULL);
 
-    if (pthread_join(child_thread, NULL)) {
+    if (pthread_join(child_thread1, NULL) || pthread_join(child_thread2, NULL)) {
         perror("Unable to properly join child thread, shutdown\n");
         shutdown();
         return EXIT_FAILURE;

@@ -9,7 +9,7 @@
 sem_t sem1;
 sem_t sem2;
 
-//emergency shutdown
+
 void shutdown() {
     sem_destroy(&sem1);
     sem_destroy(&sem2);
@@ -17,17 +17,17 @@ void shutdown() {
 
 void* child_routine(void* data) {
     for (int i = 0; i < 10; i++) {
-        sem_post(&sem2);
+        sem_wait(&sem2);
         printf("Hello from child: %d\n", i);
-        sem_wait(&sem1);
+        sem_post(&sem1);
     }
 }
 
 void* parent_routine(void* data) {
     for (int i = 0; i < 10; i++) {
-        sem_post(&sem1);
+        sem_wait(&sem1);
         printf("Hello from parent: %d\n", i);
-        sem_wait(&sem2);
+        sem_post(&sem2);
     }
 }
 
@@ -61,3 +61,30 @@ int main(int argc, char** argv) {
     shutdown();
     return EXIT_SUCCESS;
 }
+
+//типы семафоров //
+
+//область действия //process-private || system-wide
+
+//параметры семафоров
+
+// 
+// 
+// 
+//
+//
+//
+
+//операции над семафорами
+// ENIVAL - невалиддный семафор
+// 
+// sem_init || sem_open
+// sem_destroy || sem_close
+// sem_wait() && sem_trywait()
+// EINTR - прервана сигналом
+// ENOSYS - не поддарживается систеой
+// EAGAIN - невозможно моментально уменьшить значение (sem_trywait)
+//  
+// sem_post()
+// ENOSYS - не поддерживается системой
+// EOVERFLOW - семафор переполнен
