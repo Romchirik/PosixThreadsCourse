@@ -61,30 +61,3 @@ int main(int argc, char** argv) {
     shutdown();
     return EXIT_SUCCESS;
 }
-
-//типы семафоров //
-
-//область действия //process-private || system-wide
-
-//параметры семафоров
-
-// 
-// 
-// 
-//
-//
-//
-
-//операции над семафорами
-// ENIVAL - невалиддный семафор
-// 
-// sem_init || sem_open
-// sem_destroy || sem_close
-// sem_wait() && sem_trywait()
-// EINTR - прервана сигналом
-// ENOSYS - не поддарживается систеой
-// EAGAIN - невозможно моментально уменьшить значение (sem_trywait)
-//  
-// sem_post()
-// ENOSYS - не поддерживается системой
-// EOVERFLOW - семафор переполнен
