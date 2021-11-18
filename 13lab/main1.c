@@ -58,7 +58,6 @@ void* child_routine1(void* data) {
         while (turn != my_num) {
             pthread_cond_wait(&condition, &mutex);
         }
-
         printf("Hello from child 1: %d\n", i);
         turn = next_num;
         pthread_cond_broadcast(&condition);
@@ -77,7 +76,6 @@ void* parent_routine(void* data) {
             pthread_cond_wait(&condition, &mutex);
         }
         printf("Hello from parent: %d\n", i);
-        fflush(stdout);
         turn = next_num;
         pthread_cond_broadcast(&condition);
     }

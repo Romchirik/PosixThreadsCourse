@@ -11,10 +11,9 @@
 #include <stdlib.h>
 #include <sys/errno.h>
 #include <unistd.h>
-
 #define PHILO 5
 #define DELAY 300
-#define FOOD 50
+#define FOOD 500
 
 #define true 1
 #define false 0
@@ -32,6 +31,8 @@ int sleep_seconds = 0;
 int main(int argc, char **argv) {
     int i;
 
+    srand(time(NULL));
+
     if (argc == 2)
         sleep_seconds = atoi(argv[1]);
 
@@ -39,7 +40,7 @@ int main(int argc, char **argv) {
     for (i = 0; i < PHILO; i++) {
         pthread_mutex_init(&forks[i], NULL);
     }
-    for (i = 0; i < PHILO; i++) {
+    for (i = PHILO - 1; i >= 0; i--) {
         pthread_create(&phils[i], NULL, philosopher, (void *)i);
     }
     for (i = 0; i < PHILO; i++) {
@@ -63,22 +64,21 @@ void *philosopher(void *num) {
     int a = 0;
 
     while (f) {
-        // get_fork(id, right_fork, "right");
-        // get_fork(id, left_fork, "left ");
         if (get_forks(id)) {
             printf("Philosopher %d: eating.\n", id);
-            usleep(DELAY * (FOOD - f + 1));
+            usleep(rand() % 10000);
             down_forks(left_fork, right_fork);
             f = food_on_table();
             a++;
-            printf("Philosopher %d: get dish %d.\n", id, f);
+            // printf("Philosopher %d: get dish %d.\n", id, f);
         } else {
             printf("Philosopher %d not allowed to eat, waiting\n", id);
         }
-        printf("Philosopher %d: thinking\n", id);
-        usleep(DELAY * (FOOD - f + 1));
+        // printf("Philosopher %d: thinking\n", id);
+        usleep(rand() % 100);
     }
-    printf("Philosopher %d is done eating %d.\n", id, a);
+    usleep(id * 100000);
+    printf("%d\n", a);
     return (NULL);
 }
 
@@ -99,15 +99,16 @@ int food_on_table() {
 char get_forks(int id) {
     int left_fork = id % PHILO;
     int right_fork = (id + 1) % PHILO;
-
-    pthread_mutex_lock(&forks[left_fork]);
-
-    if (pthread_mutex_trylock(&forks[right_fork]) == EBUSY) {
-        pthread_mutex_unlock(&forks[left_fork]);
-        return false;
+    
+    if (left_fork < right_fork) {
+        pthread_mutex_lock(&forks[left_fork]);
+        pthread_mutex_lock(&forks[right_fork]);
     } else {
-        return true;
+        pthread_mutex_lock(&forks[right_fork]);
+        pthread_mutex_lock(&forks[left_fork]);
     }
+
+    return true;
 }
 
 void down_forks(int f1, int f2) {

@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
     printf("\n");
     print_list(head);
-    for (size_t i = 0; i < lines_read - 1; i++) {
+    for (size_t i = 0; i < lines_read; i++) {
         free(strings[i]);
     }
     free(strings);
